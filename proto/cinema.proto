@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package cinema;
+
+import "google/protobuf/timestamp.proto";
+
+service Cinema {
+  rpc GetFilms(Empty) returns (Films);
+  rpc GetFilmScreenings(GetFilmScreeningsRequest) returns (Screenings);
+  rpc SubscribeScreenings(SubscribeScreeningsRequest) returns (stream Screenings);
+}
+
+message Film {
+  uint32 id = 1;
+  string name = 2;
+  float duration_sec = 3;
+}
+
+message Films {
+  repeated Film films = 1;
+}
+
+message Screening {
+  uint64 id = 1;
+  uint32 film_id = 2;
+  google.protobuf.Timestamp start_date = 3;
+  google.protobuf.Timestamp end_date = 4;
+  Venue venue = 5;
+
+  message Venue {
+    uint32 id = 1;
+    uint32 maximum_seats_count = 2;
+    uint32 purchased_seats_count = 3;
+    repeated Seat seats = 4;
+  }
+
+  message Seat {
+    uint32 id = 1;
+    SeatType type = 2;
+    bool purchased = 3;
+  }
+}
+
+message Screenings {
+  repeated Screening screenings = 1;
+}
+
+enum SeatType {
+  STANDARD = 0;
+  PREMIUM = 1;
+  ADAPTED_FOR_DISABLED = 2;
+}
+
+message Empty {}
+
+message GetFilmScreeningsRequest {
+  uint32 film_id = 1;
+}
+
+message SubscribeScreeningsRequest {
+  repeated uint32 film_ids = 1;
+  repeated uint32 venue_ids = 2;
+}
