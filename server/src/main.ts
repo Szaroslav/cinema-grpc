@@ -2,8 +2,6 @@ import path from "node:path";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import prand from "pure-rand";
-import * as rxjs from "rxjs";
-import { Observable } from "rxjs";
 
 import { ProtoGrpcType } from "./proto/cinema";
 import { Empty } from "./proto/cinema/Empty";
@@ -85,38 +83,6 @@ const screenings: {
   },
 };
 
-const screeningObservables: {
-  byFilmId: Record<number, Observable<Screening>>;
-  byVenueId: Record<number, Observable<Screening>>;
-} = {
-  byFilmId: {
-    1: rxjs.from(screenings.byFilmId[1]),
-    2: rxjs.from(screenings.byFilmId[2]),
-    3: rxjs.from(screenings.byFilmId[3]),
-  },
-  byVenueId: {
-    1: rxjs.from(screenings.byVenueId[1]),
-    2: rxjs.from(screenings.byVenueId[2]),
-    3: rxjs.from(screenings.byVenueId[3]),
-  },
-};
-
-const screeningSubjects: {
-  byFilmId: Record<number, rxjs.Subject<Screening>>;
-  byVenueId: Record<number, rxjs.Subject<Screening>>;
-} = {
-  byFilmId: {
-    1: new rxjs.Subject(),
-    2: new rxjs.Subject(),
-    3: new rxjs.Subject(),
-  },
-  byVenueId: {
-    1: new rxjs.Subject(),
-    2: new rxjs.Subject(),
-    3: new rxjs.Subject(),
-  },
-};
-
 const SEED = 31;
 const generator = prand.xoroshiro128plus(SEED);
 
@@ -154,15 +120,6 @@ function main() {
     }
 
     console.log(`Server has successfully started on port ${port}`);
-
-    for (const filmId in screeningObservables.byFilmId) {
-      screeningObservables.byFilmId[filmId]
-        .subscribe(screeningSubjects.byFilmId[filmId]);
-    }
-    for (const venueId in screeningObservables.byVenueId) {
-      screeningObservables.byVenueId[venueId]
-        .subscribe(screeningSubjects.byVenueId[venueId]);
-    }
 
     addScreeningCoroutine(2500);
     purchaseSeatCoroutine(1500);
@@ -295,9 +252,7 @@ function addScreeningCoroutine(intervalMsec: number) {
     };
 
     screenings.byFilmId[filmId].push(screening);
-    screeningSubjects.byFilmId[filmId].next(screening);
     screenings.byVenueId[venueId].push(screening);
-    screeningSubjects.byVenueId[venueId].next(screening);
   }, intervalMsec);
 }
 
